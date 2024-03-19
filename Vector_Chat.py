@@ -10,13 +10,6 @@ import time
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-load_dotenv()
-import re
-import streamlit as st
-import os
-import google.generativeai as genai 
-import io
-import PIL.Image
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 #from langchain.vectorstores import FAISS
 from langchain_community.vectorstores import FAISS
@@ -24,7 +17,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 
-path = 'C:/genai/Dataset_PDF'
+path = 'Path for the datasets'
 files = os.listdir(path)
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model=genai.GenerativeModel("gemini-pro")
@@ -69,8 +62,7 @@ def autovector(text):
     text_chunks=get_text_chunks(raw_text)
     get_vector_store(text_chunks)
 
-#autovector(files)
-#autovector("Service.pdf")
+autovector(files)
 
 
 def get_conversational_chain():
