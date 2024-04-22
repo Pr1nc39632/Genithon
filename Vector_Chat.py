@@ -17,9 +17,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 
-path = 'Path for the datasets'
-files = os.listdir(path)
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+#path = 'C:/genai/Dataset_PDF'       Path for training data sets
+#files = os.listdir(path)
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))  
 model=genai.GenerativeModel("gemini-pro")
 model_pro=genai.GenerativeModel("gemini-pro-vision")
 chat=model.start_chat(history=[])
@@ -57,15 +57,15 @@ def get_vector_store(text_chunks):
    vector_store.save_local("faiss_index")
 
 
-def autovector(text):
+def autovector(text):        # Function to create a vector store
     raw_text=get_pdf_text(text)
     text_chunks=get_text_chunks(raw_text)
     get_vector_store(text_chunks)
 
-autovector(files)
+#autovector(files)
 
 
-def get_conversational_chain():
+def get_conversational_chain():             #Creates Conversational Chain , Any prompt engineering tells the model how it should percieve the vector store date
       prompt_template="""
 Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
     provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
@@ -79,7 +79,7 @@ Answer the question as detailed as possible from the provided context, make sure
 
       return chain
 
-def user_input(user_question):
+def user_input(user_question):                     # Runs Similarity search between user prompt and vector store
     embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
     
     new_db = FAISS.load_local("faiss_index", embeddings)
@@ -94,22 +94,20 @@ def user_input(user_question):
 
     return response["output_text"]
 
-def stream_data(text):
+def stream_data(text):                 # Streams output a word at a time
     for word in text.split():
         yield word + " "
         time.sleep(0.02)
 
 
-st.set_page_config(page_title="Team Skynet")
-st.header("BBY - DU20")
+st.set_page_config(page_title="Team Skynet")           # Streamlit UI Starts here
+st.header("Hi John Doe, How can I help you today?")
 
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history']=[]
 
 input = st.chat_input("Say something")
-s_text=""
-
-with st.sidebar:
+with st.sidebar:                                            #Sidebar starts here
         st.title("Image")
         image_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
         if image_file is not None:
@@ -121,8 +119,17 @@ with st.sidebar:
              if image_file is not None:
                  response =get_gemini_pro_response([check_prompt,image])
                  if (re.search("Yes",response)):
-                     response =get_gemini_pro_response(["list all the electronic objects you see in the image? what the build and make of the device and is there a damage?, Reply in a full sentense", image])
+                     #Prompt engineering here will guide the foundational model for object detection
+                     response =get_gemini_pro_response(["""list all                            
+                                                        the electronic objects you see in the
+                                                         image? what the build and make
+                                                         of the device. Do not mention
+                                                        what the device is made of. List the 
+                                                        damages if you see any.
+                                                        start your response 'with I See'
+                                                        """, image])
                      st.session_state['chat_history'].append(("Bot",response))
+                     st.session_state['chat_history'].append(("Bot","You can ask me questions regarding this product"))
                      st.success("Done")
                  else:
                      st.error("Image is not an electronic object")
@@ -132,7 +139,7 @@ with st.sidebar:
 
 if input:
     response = user_input(input)
-    st.session_state['chat_history'].append(("You",input))
+    st.session_state['chat_history'].append(("Mike",input))
     st.session_state['chat_history'].append(("Bot",response))
     #st.subheader("The Response is")
     
@@ -153,3 +160,4 @@ for role, text in st.session_state['chat_history']:
     c=c+1
 
 
+#Streamlit ends here
